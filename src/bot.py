@@ -8,13 +8,16 @@ from datetime import datetime
 import re
 
 import asyncio
+from aiogram.client.session.aiohttp import AiohttpSession
+from aiogram.client.telegram import TelegramAPIServer
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters.command import Command
-from aiogram.types import Message
+from aiogram.types import Message, FSInputFile
 from aiogram.enums import ParseMode
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.context import FSMContext
 from aiogram.filters import StateFilter
+
 
 # Load environment variables
 load_dotenv()
@@ -23,7 +26,20 @@ load_dotenv()
 logging.basicConfig(level=logging.INFO)
 
 # Initialize bot and dispatcher
-bot = Bot(token=os.getenv('BOT_TOKEN'))
+# bot = Bot(token=os.getenv('BOT_TOKEN'))
+# Change your bot initialization
+# Initialize bot with local API server
+logging.info(f"Initialize bot with local API server...")
+bot = Bot(
+    token=os.getenv('BOT_TOKEN'),
+    session=AiohttpSession(
+        api=TelegramAPIServer(
+            base="http://localhost:8081/bot{token}/{method}",
+            file="http://localhost:8081/file/bot{token}/{path}"
+        )
+    )
+)
+logging.info(f"Initialize bot with local API server: DONE")
 dp = Dispatcher()
 
 # Define states for conversation
@@ -54,6 +70,10 @@ async def get_video(message: Message, state: FSMContext):
     await message.answer("Please send me a YouTube video link:")
     await state.set_state(VideoDownloadStates.waiting_for_link)
 
+def get_file_size(file_path: str) -> int:
+    """Get file size in bytes."""
+    return os.path.getsize(file_path)
+
 # YouTube link validation pattern
 YOUTUBE_LINK_PATTERN = r'(https?://)?(www\.)?(youtube\.com/watch\?v=|youtu\.be/)[\w\-]+'    
 
@@ -73,6 +93,11 @@ async def process_video_link(message: Message, state: FSMContext):
     try:
         # Download the video with progress updates
         video_path = await download_youtube_video(link, message, processing_msg)
+        
+        file_size = get_file_size(video_path)
+        file_size_mb = file_size / (1024 * 1024)
+        
+        logging.info(f"Video file size: {file_size_mb:.2f} MB")
         
         # Send the video to the user
         await message.answer("Here's your video:")
