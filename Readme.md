@@ -1,5 +1,13 @@
 This bot allows one to load videos from youtube and send them to telegram
 
+0) **Install ffmpeg**
+
+```bash
+sudo apt update
+sudo apt install ffmpeg
+```
+
+
 1) **Get API credentials**
 
 - Go to https://my.telegram.org/apps
@@ -38,5 +46,11 @@ pip install -r requirements.txt
 
 ```bash
 python src/bot.py
+```
+
+or if you have cookies.txt file ([get cookies.txt file locally chrome extension](https://chromewebstore.google.com/detail/get-cookiestxt-locally/cclelndahbckbenkjhflpdbgdldlbecc)) from youtube then run like this:
+
+```bash
+python src/bot.py --cookies /path/to/youtube/cookies/file.txt
 ```
 

@@ -1,6 +1,7 @@
 import typing as t
 import logging
 import os
+import argparse
 import tempfile
 import subprocess
 from dotenv import load_dotenv
@@ -19,6 +20,18 @@ from aiogram.fsm.context import FSMContext
 from aiogram.filters import StateFilter
 
 
+# Create an argument parser
+parser = argparse.ArgumentParser(description='Run a YouTube bot with a cookies file.')
+parser.add_argument('--cookies', type=str, required=False, default=None,
+                    help='Optional path to the cookies file (e.g., yt_cookies.txt)')
+
+# Parse the arguments from the command line
+args = parser.parse_args()
+
+# Now you can access the path using args.cookies
+cookies_file_path = args.cookies
+
+
 # Load environment variables
 load_dotenv()
 
@@ -27,7 +40,6 @@ logging.basicConfig(level=logging.INFO)
 
 # Initialize bot and dispatcher
 # bot = Bot(token=os.getenv('BOT_TOKEN'))
-# Change your bot initialization
 # Initialize bot with local API server
 logging.info(f"Initialize bot with local API server...")
 bot = Bot(
@@ -140,10 +152,12 @@ async def download_youtube_video(url: str, message: Message = None, processing_m
             url,
             '-o', output_template,
             '-f', 'best[height<=720]',  # Limit quality to 720p to reduce file size
-            '--geo-bypass',
+            #'--geo-bypass',
             '--progress',
-            '--newline'
+            '--newline',
         ]
+        if cookies_file_path is not None:
+            command.extend(['--cookies', cookies_file_path])
         
         # Run the command
         process = await asyncio.create_subprocess_exec(
